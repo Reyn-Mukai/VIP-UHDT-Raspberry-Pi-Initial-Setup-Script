@@ -20,6 +20,8 @@ echo "Enabling RDP server on startup..."
 systemctl enable xrdp
 echo "Installing CRC32..."
 apt-get -y install libarchive-zip-perl
+echo "Installing rpl..."
+apt-get -y install rpl
 
 echo "Installing Openssl..."
 apt-get -y install openssl
@@ -50,6 +52,7 @@ chmod -R 777 images
 echo "Installing Apache2 2.4 webserver..."
 apt-get -y install apache2
 echo "Configuring Apache2 virtual hosts..."
+rpl -w "IncludeOptional sites-enabled/*.conf" "#IncludeOptional sites-enabled/*.conf" /etc/apache2/apache2.conf
 echo '<VirtualHost *:80>' >> /etc/apache2/apache2.conf
 echo '<IfModule mod_rewrite.c>' >> /etc/apache2/apache2.conf
 echo '<IfModule mod_ssl.c>' >> /etc/apache2/apache2.conf
@@ -90,6 +93,10 @@ echo 'directory mask=0777' >> /etc/samba/smb.conf
 echo 'public=no' >> /etc/samba/smb.conf
 echo "Creating user pi..."
 smbpasswd -a pi
+
+echo "Enabling Apache2 SSL and rewrite modules..."
+a2enmod ssl
+a2enmod rewrite
 
 echo "Restarting reconfigured services..."
 systemctl restart proftpd
