@@ -30,7 +30,7 @@ cd /home/pi
 mkdir ssl
 cd /home/pi/ssl
 echo "Generating self-signed SSL certificated..."
-openssl req -new -newkey rsa:1024 -days 730 -nodes -x509 -sha256 -subj "/C=US/ST=/L=/O=/CN=/" -keyout server.key -out server.crt
+openssl req -new -newkey rsa:4096 -days 730 -nodes -x509 -sha256 -subj "/C=US/ST=/L=/O=/CN=/" -keyout server.key -out server.crt
 
 echo "Installing FTP server..."
 apt-get -y install proftpd
