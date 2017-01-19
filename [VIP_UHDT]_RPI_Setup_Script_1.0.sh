@@ -34,7 +34,7 @@ openssl req -new -newkey rsa:4096 -days 730 -nodes -x509 -sha256 -subj "/C=US/ST
 
 echo "Installing FTP server..."
 apt-get -y install proftpd
-if ! grep -q "#Certificates installed to /home/pi/ssl"
+if ! grep -q "#Certificates installed to /home/pi/ssl" /etc/proftpd/proftpd.conf
 then
   echo "Installing SSL certificate..."
   echo '#Certificates installed to /home/pi/ssl' >> /etc/proftpd/proftpd.conf
