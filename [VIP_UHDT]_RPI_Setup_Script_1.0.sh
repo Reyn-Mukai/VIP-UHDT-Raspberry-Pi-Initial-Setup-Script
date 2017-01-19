@@ -34,16 +34,22 @@ openssl req -new -newkey rsa:4096 -days 730 -nodes -x509 -sha256 -subj "/C=US/ST
 
 echo "Installing FTP server..."
 apt-get -y install proftpd
-echo "Installing SSL certificate..."
-echo 'PassivePorts                 49152 65534' >> /etc/proftpd/proftpd.conf
-echo 'Include                      /etc/proftpd/tls.conf' >> /etc/proftpd/proftpd.conf
-echo 'TLSEngine                    on' >> /etc/proftpd/tls.conf
-echo 'TLSLog                       /var/log/proftpd/tls.log' >> /etc/proftpd/tls.conf
-echo 'TLSProtocol                  SSLv23' >> /etc/proftpd/tls.conf
-echo 'TLSRequired                  on' >> /etc/proftpd/tls.conf
-echo 'TLSRSACertificateFile        /home/pi/ssl/server.crt' >> /etc/proftpd/tls.conf
-echo 'TLSRSACertificateKeyFile     /home/pi/ssl/server.key' >> /etc/proftpd/tls.conf
-
+if ! grep -q "#Certificates installed to /home/pi/ssl"
+then
+  echo "Installing SSL certificate..."
+  echo '#Certificates installed to /home/pi/ssl' >> /etc/proftpd/proftpd.conf
+  echo 'PassivePorts                 49152 65534' >> /etc/proftpd/proftpd.conf
+  echo 'Include                      /etc/proftpd/tls.conf' >> /etc/proftpd/proftpd.conf
+  echo 'TLSEngine                    on' >> /etc/proftpd/tls.conf
+  echo 'TLSLog                       /var/log/proftpd/tls.log' >> /etc/proftpd/tls.conf
+  echo 'TLSProtocol                  SSLv23' >> /etc/proftpd/tls.conf
+  echo 'TLSRequired                  on' >> /etc/proftpd/tls.conf
+  echo 'TLSRSACertificateFile        /home/pi/ssl/server.crt' >> /etc/proftpd/tls.conf
+  echo 'TLSRSACertificateKeyFile     /home/pi/ssl/server.key' >> /etc/proftpd/tls.conf
+else
+  echo "Warning: FTP server already configured... Skipping..."
+fi
+  
 echo "Creating image directory..."
 cd /home/pi
 mkdir images
@@ -51,48 +57,62 @@ chmod -R 777 images
 
 echo "Installing Apache2 2.4 webserver..."
 apt-get -y install apache2
-echo "Configuring Apache2 virtual hosts..."
-rpl -w "IncludeOptional sites-enabled/*.conf" "#IncludeOptional sites-enabled/*.conf" /etc/apache2/apache2.conf
-echo '<VirtualHost *:80>' >> /etc/apache2/apache2.conf
-echo '<IfModule mod_rewrite.c>' >> /etc/apache2/apache2.conf
-echo '<IfModule mod_ssl.c>' >> /etc/apache2/apache2.conf
-echo '<Location/>' >> /etc/apache2/apache2.conf
-echo 'RewriteEngine on' >> /etc/apache2/apache2.conf
-echo 'RewriteCond %{HTTPS} !^on$ [NC]' >> /etc/apache2/apache2.conf
-echo 'RewriteRule . https://%{HTTP_HOST}%{REQUEST_URI} [L]' >> /etc/apache2/apache2.conf
-echo '</Location>' >> /etc/apache2/apache2.conf
-echo '</IfModule>' >> /etc/apache2/apache2.conf
-echo '</IfModule>' >> /etc/apache2/apache2.conf
-echo '</VirtualHost>' >> /etc/apache2/apache2.conf
-echo '<VirtualHost *:443>' >> /etc/apache2/apache2.conf
-echo 'DocumentRoot /home/pi/images' >> /etc/apache2/apache2.conf
-echo '<Directory "/home/pi/images">' >> /etc/apache2/apache2.conf
-echo 'allow from all' >> /etc/apache2/apache2.conf
-echo 'Options FollowSymLinks Indexes MultiViews SymLinksIfOwnerMatch' >> /etc/apache2/apache2.conf
-echo 'Require all granted' >> /etc/apache2/apache2.conf
-echo 'AllowOverride All' >> /etc/apache2/apache2.conf
-echo '</Directory>' >> /etc/apache2/apache2.conf
-echo 'ServerPath /home/pi/images' >> /etc/apache2/apache2.conf
-echo 'SSLEngine on' >> /etc/apache2/apache2.conf
-echo 'SSLCertificateFile /home/pi/ssl/server.crt' >> /etc/apache2/apache2.conf
-echo 'SSLCertificateKeyFile /home/pi/ssl/server.key' >> /etc/apache2/apache2.conf
-echo 'SSLCompression off' >> /etc/apache2/apache2.conf
-echo 'SSLProtocol All -SSLv2 -SSLv3' >> /etc/apache2/apache2.conf
-echo '</VirtualHost>' >> /etc/apache2/apache2.conf
+if ! grep -q "#IncludeOptional sites-enabled/*.conf" /etc/apache2/apache2.conf
+then
+  rpl -w "IncludeOptional sites-enabled/*.conf" "#IncludeOptional sites-enabled/*.conf" /etc/apache2/apache2.conf
+fi
+if ! grep -q "#Image Folder" /etc/apache2/apache2.conf
+then
+  echo "Configuring Apache2 virtual hosts..."
+  echo '#Image Folder' >> /etc/apachee2/apache2.conf
+  echo '<VirtualHost *:80>' >> /etc/apache2/apache2.conf
+  echo '<IfModule mod_rewrite.c>' >> /etc/apache2/apache2.conf
+  echo '<IfModule mod_ssl.c>' >> /etc/apache2/apache2.conf
+  echo '<Location/>' >> /etc/apache2/apache2.conf
+  echo 'RewriteEngine on' >> /etc/apache2/apache2.conf
+  echo 'RewriteCond %{HTTPS} !^on$ [NC]' >> /etc/apache2/apache2.conf
+  echo 'RewriteRule . https://%{HTTP_HOST}%{REQUEST_URI} [L]' >> /etc/apache2/apache2.conf
+  echo '</Location>' >> /etc/apache2/apache2.conf
+  echo '</IfModule>' >> /etc/apache2/apache2.conf
+  echo '</IfModule>' >> /etc/apache2/apache2.conf
+  echo '</VirtualHost>' >> /etc/apache2/apache2.conf
+  echo '<VirtualHost *:443>' >> /etc/apache2/apache2.conf
+  echo 'DocumentRoot /home/pi/images' >> /etc/apache2/apache2.conf
+  echo '<Directory "/home/pi/images">' >> /etc/apache2/apache2.conf
+  echo 'allow from all' >> /etc/apache2/apache2.conf
+  echo 'Options FollowSymLinks Indexes MultiViews SymLinksIfOwnerMatch' >> /etc/apache2/apache2.conf
+  echo 'Require all granted' >> /etc/apache2/apache2.conf
+  echo 'AllowOverride All' >> /etc/apache2/apache2.conf
+  echo '</Directory>' >> /etc/apache2/apache2.conf
+  echo 'ServerPath /home/pi/images' >> /etc/apache2/apache2.conf
+  echo 'SSLEngine on' >> /etc/apache2/apache2.conf
+  echo 'SSLCertificateFile /home/pi/ssl/server.crt' >> /etc/apache2/apache2.conf
+  echo 'SSLCertificateKeyFile /home/pi/ssl/server.key' >> /etc/apache2/apache2.conf
+  echo 'SSLCompression off' >> /etc/apache2/apache2.conf
+  echo 'SSLProtocol All -SSLv2 -SSLv3' >> /etc/apache2/apache2.conf
+  echo '</VirtualHost>' >> /etc/apache2/apache2.conf
+else
+  echo "Warning: VirtualHost already configured... Skipping..."
+fi
 
 echo "Installing Samba network sharing server..."
 apt-get -y install samba
-echo "Configuring shared folder..."
-echo '[VIP_UHDT_RaspberryPi]' >> /etc/samba/smb.conf
-echo 'path=/home/pi/images' >> /etc/samba/smb.conf
-echo 'browseable=yes' >> /etc/samba/smb.conf
-echo 'writeable=yes' >> /etc/samba/smb.conf
-echo 'only guest=no' >> /etc/samba/smb.conf
-echo 'create mask=0777' >> /etc/samba/smb.conf
-echo 'directory mask=0777' >> /etc/samba/smb.conf
-echo 'public=no' >> /etc/samba/smb.conf
-echo "Creating user pi..."
-smbpasswd -a pi
+if ! grep -q "[VIP_UHDT_RapsberryPi]" /etc/samba/smb.conf
+then
+  echo "Configuring shared folder..."
+  echo '[VIP_UHDT_RaspberryPi]' >> /etc/samba/smb.conf
+  echo 'path=/home/pi/images' >> /etc/samba/smb.conf
+  echo 'browseable=yes' >> /etc/samba/smb.conf
+  echo 'writeable=yes' >> /etc/samba/smb.conf
+  echo 'only guest=no' >> /etc/samba/smb.conf
+  echo 'create mask=0777' >> /etc/samba/smb.conf
+  echo 'directory mask=0777' >> /etc/samba/smb.conf
+  echo 'public=no' >> /etc/samba/smb.conf
+  echo "Creating user pi..."
+  smbpasswd -a pi
+else
+  echo "Warning: SMB share already configured... Skipping..."
+fi
 
 echo "Enabling Apache2 SSL and rewrite modules..."
 a2enmod ssl
